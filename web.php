@@ -1,82 +1,83 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
-// 1. Mövcudluq və qiymət yoxlama linkimiz (Bayaq işlətdiyimiz)
-Route::get('/test-room', function() {
-    $date1 = \Carbon\Carbon::parse('2026-06-01');
-    $date2 = \Carbon\Carbon::parse('2026-06-05');
-    $days = $date1->diffInDays($date2); 
-    $totalPrice = $days * 50; 
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Otaq boşdur. Rezervasiya edə bilərsiniz.',
-        'total_price' => $totalPrice . ' AZN'
-    ]);
-});
-
-// 2. REZERVASIYA TƏSDİQİ: Müştəri otağı təsdiqləyir və status "confirmed" olur
-Route::get('/booking-confirm', function() {
-    // Burada simulyasiya edirik: Müştəri "Məmməd" otağı tutdu
-    return response()->json([
-        'status' => 'confirmed',
-        'message' => 'Rezervasiyanız uğurla təsdiqləndi!',
-        'details' => [
-            'customer' => 'Məmməd Əliyev',
-            'room' => 'Otaq 101 (Standart)',
-            'booking_status' => 'Confirmed (Təsdiqləndi)'
-        ]
-    ]);
-});
-
-// 3. CHECK-IN STATUSU: Müştəri otelə gəldi və otağa yerləşdi
-Route::get('/booking-checkin', function() {
-    // Menecer düyməyə basır və müştəri içəri girir
-    return response()->json([
-        'status' => 'checked_in',
-        'message' => 'Müştəri otelə giriş etdi. Otaq açarları təhvil verildi.',
-        'room_status' => 'Occupied (Dolu)',
-        'booking_status' => 'Checked In (Giriş edildi)'
-    ]);
-});
-
-// 4. CHECK-OUT STATUSU: Müştəri oteldən çıxır və otaq boşalır
-Route::get('/booking-checkout', function() {
-    // Müştəri hesabı ödəyib çıxır
-    return response()->json([
-        'status' => 'checked_out',
-        'message' => 'Müştəri oteldən çıxış etdi. Rezervasiya tamamlandı.',
-        'room_status' => 'Available (Boşdur - Təmizliyə göndərildi)',
-        'booking_status' => 'Checked Out (Çıxış edildi)'
-    ]);
-});
-// 5. MENECER PANELİ HESABATLARI: Qazanc və Doluluq Hesabatı
-Route::get('/manager-reports', function() {
-    // Burada menecer üçün simulyasiya datası hazırlayırıq
-    $totalEarnings = 4250; // Ümumi qazanc (AZN)
-    $totalRooms = 10;     // Oteldəki ümumi otaq sayı
-    $occupiedRooms = 4;   // Hazırda dolu olan otaq sayı
-    
-    // Doluluq faizini hesablayırıq
-    $occupancyRate = ($occupiedRooms / $totalRooms) * 100; // 40%
-
-    return response()->json([
-        'report_title' => 'OTEL MENECER HESABAT PANELİ',
-        'generated_at' => 'May 2026',
-        'financials' => [
-            'total_revenue' => $totalEarnings . ' AZN',
-            'average_revenue_per_room' => ($totalEarnings / $totalRooms) . ' AZN'
-        ],
-        'occupancy_stats' => [
-            'total_rooms' => $totalRooms,
-            'occupied_rooms' => $occupiedRooms,
-            'free_rooms' => $totalRooms - $occupiedRooms,
-            'occupancy_rate' => $occupancyRate . '%' // Doluluq faizi
-        ],
-        'popular_room_type' => 'Lyuks (Ən çox gəlir gətirən)'
-    ]);
-});
+// 1. ANA SƏHİFƏ: Müəllim əsas linkə girəndə dizayn paneli açılır
 Route::get('/', function () {
     return view('dashboard');
+});
+
+// 2. REZERVASİYA VƏ QİYMƏT HESABLAMA (Vizual Panel formasında)
+Route::get('/booking-confirm', function (Request $request) {
+    $checkIn = $request->input('check_in', '2026-05-17');
+    $checkOut = $request->input('check_out', '2026-05-20');
+    $roomType = $request->input('room_type', 'standard');
+
+    $cIn = new DateTime($checkIn);
+    $cOut = new DateTime($checkOut);
+    $days = $cIn->diff($cOut)->days;
+    if($days <= 0) $days = 1;
+
+    $price = 50;
+    if ($roomType == 'luxury') $price = 120;
+    if ($roomType == 'king') $price = 250;
+    $total = $days * $price;
+
+    // Qara ekran çıxmasın deyə məlumatları dizaynın içinə göndəririk:
+    return "
+    <body style='background:#1e293b; color:white; font-family:Arial; padding:40px; text-align:center;'>
+        <div style='background:#0f172a; padding:30px; border-radius:12px; display:inline-block; border:1px solid #334155;'>
+            <h2 style='color:#38bdf8;'>🎉 Rezervasiya Uğurla Hesablandı!</h2>
+            <p><b>Otaq Növü:</b> " . strtoupper($roomType) . "</p>
+            <p><b>Qalacağınız Gün:</b> " . $days . " gün</p>
+            <p><b>Günlük Qiymət:</b> " . $price . " AZN</p>
+            <hr style='border-color:#334155;'>
+            <h3 style='color:#4ade80;'>Toplam Ödəniş: " . $total . " AZN</h3>
+            <a href='/' style='color:#38bdf8; text-decoration:none;'>⬅️ Panelə Qayıt</a>
+        </div>
+    </body>";
+});
+
+// 3. GİRİŞ (Check-in) LİNKİ
+Route::get('/booking-checkin', function () {
+    return "
+    <body style='background:#1e293b; color:white; font-family:Arial; padding:40px; text-align:center;'>
+        <div style='background:#0f172a; padding:30px; border-radius:12px; display:inline-block; border:1px solid #334155;'>
+            <h2 style='color:#4ade80;'>🔑 Qeydiyyat (Check-in) Aktivdir</h2>
+            <p>Müştəri otağın açarlarını təhvil aldı və otağa yerləşdi.</p>
+            <p><b>Otaq Statusu:</b> <span style='color:#f87171;'>Dolu (Məşğul)</span></p>
+            <a href='/' style='color:#38bdf8; text-decoration:none;'>⬅️ Panelə Qayıt</a>
+        </div>
+    </body>";
+});
+
+// 4. ÇIXIŞ (Check-out) LİNKİ
+Route::get('/booking-checkout', function () {
+    return "
+    <body style='background:#1e293b; color:white; font-family:Arial; padding:40px; text-align:center;'>
+        <div style='background:#0f172a; padding:30px; border-radius:12px; display:inline-block; border:1px solid #334155;'>
+            <h2 style='color:#fbbf24;'>🧹 Çıxış (Check-out) Tamamlandı</h2>
+            <p>Müştəri oteldən ayrıldı. Ödəniş qəbul edildi.</p>
+            <p><b>Otaq Statusu:</b> <span style='color:#4ade80;'>Boşdur - Təmizliyə Göndərildi</span></p>
+            <a href='/' style='color:#38bdf8; text-decoration:none;'>⬅️ Panelə Qayıt</a>
+        </div>
+    </body>";
+});
+
+// 5. MENECER HESABAT PANELİ LİNKİ
+Route::get('/manager-reports', function () {
+    return "
+    <body style='background:#1e293b; color:white; font-family:Arial; padding:40px; text-align:center;'>
+        <div style='background:#0f172a; padding:30px; border-radius:12px; display:inline-block; border:1px solid #334155; text-align:left;'>
+            <h2 style='color:#38bdf8; text-align:center;'>📊 Otel Aylıq Maliyyə Hesabatı</h2>
+            <p><b>Hesabat Tarixi:</b> May 2026</p>
+            <p><b>Ümumi Qazanc:</b> <span style='color:#4ade80;'>4,250 AZN</span></p>
+            <p><b>Otel Doluluq Faizi:</b> 40%</p>
+            <p><b>Boş Otaq Sayı:</b> 6 Otaq</p>
+            <div style='text-align:center; margin-top:20px;'>
+                <a href='/' style='color:#38bdf8; text-decoration:none;'>⬅️ Panelə Qayıt</a>
+            </div>
+        </div>
+    </body>";
 });
