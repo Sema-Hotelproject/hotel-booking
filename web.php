@@ -77,3 +77,6 @@ Route::get('/manager-reports', function() {
         'popular_room_type' => 'Lyuks (Ən çox gəlir gətirən)'
     ]);
 });
+Route::get('/', function () {
+    return view('dashboard');
+});
