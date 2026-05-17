@@ -9,9 +9,6 @@ Bu layihə Laravel 11 ilə hazırlanmış otel rezervasiya sisteminin əsas mən
 4. php artisan db:seed --class=HotelSeeder
 5. php artisan serve
 
-## Test Linkləri:
-* Rezervasiya və Qiymət Hesablama: http://127.0.0.1:8000/test-room
-* Rezervasiya Təsdiqi: http://127.0.0.1:8000/booking-confirm
-* Giriş (Check-in): http://127.0.0.1:8000/booking-checkin
-* Çıxış (Check-out): http://127.0.0.1:8000/booking-checkout
-* Menecer Hesabat Paneli: http://127.0.0.1:8000/manager-reports
+### 🔗 Layihənin Giriş Linki:
+* *Ana Səhifə (Otel Paneli):* http://127.0.0.1:8000
+
